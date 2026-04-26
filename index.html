@@ -19,12 +19,10 @@
         .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         .gradient-text { background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
         
-        /* Loading Spinner */
         .loader { border-top-color: #38bdf8; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -37,7 +35,7 @@
     <div id="init-overlay" class="absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
         <div class="mb-6">
             <img src="logo.png" alt="Vijñāna AI" class="h-20 w-auto mx-auto mb-4 opacity-90">
-            <h1 class="text-4xl font-bold tracking-wider">Vijñāna AI</h1>
+            <h1 class="text-4xl font-bold tracking-wider text-white">Vijñāna AI</h1>
             <p class="text-slate-400 mt-2">Initializing Kalpanā Zero-Knowledge Architecture</p>
         </div>
         
@@ -74,9 +72,12 @@
             <p class="text-[10px] text-slate-500 tracking-widest uppercase">Kalpanā Air-Gapped Prototype</p>
         </div>
         
-        <div id="global-spinner" class="hidden flex items-center space-x-3 bg-slate-800/50 px-4 py-2 rounded-full border border-white/5">
+        <div id="global-spinner" class="hidden flex items-center space-x-3 bg-slate-800/60 px-5 py-2 rounded-full border border-white/10 shadow-lg">
             <div class="loader ease-linear rounded-full border-2 border-t-2 border-slate-700 h-4 w-4"></div>
-            <span class="text-xs text-sky-400 font-medium" id="spinner-text">Processing...</span>
+            <div class="flex flex-col">
+                <span class="text-[10px] text-sky-400 font-bold uppercase tracking-widest" id="spinner-text">Processing</span>
+                <span class="text-[9px] text-slate-400 font-mono" id="ingest-pct">0% Complete</span>
+            </div>
         </div>
     </header>
 
@@ -88,51 +89,51 @@
                     <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round"/></svg>
                 </div>
                 <p class="text-sm text-slate-200 font-semibold">Select Research Paper</p>
-                <p class="text-xs text-slate-500 mt-1">PDF or TXT</p>
+                <p class="text-xs text-slate-500 mt-1 font-mono">PDF / TXT [Kalpanā Target]</p>
             </div>
 
-            <div class="glass-panel rounded-xl p-5 space-y-4 border border-white/5">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">State Diagnostics</h3>
+            <div class="glass-panel rounded-xl p-5 space-y-4 border border-white/5 shadow-inner">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-2">State Diagnostics</h3>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-slate-300">Ingested Tokens</span>
+                        <span class="text-sm text-slate-400">Ingested Tokens</span>
                         <span id="stat-tokens" class="text-sm text-slate-100 font-mono">0</span>
                     </div>
                     
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-slate-300">Kalpanā RAM Usage</span>
+                        <span class="text-sm text-slate-400">Kalpanā RAM</span>
                         <span id="stat-mem" class="text-sm text-emerald-400 font-mono">0.00 MB</span>
                     </div>
 
                     <div class="pt-4 border-t border-slate-800">
-                        <p class="text-[10px] text-slate-500 uppercase mb-2">Theoretical Memory Reduction</p>
+                        <p class="text-[10px] text-slate-500 uppercase mb-2">Memory Reduction [Architecture Gain]</p>
                         <div class="flex justify-between items-center">
-                            <span class="text-xs text-slate-400 italic">Est. Standard KV-Cache:</span>
+                            <span class="text-xs text-slate-500 italic">Est. Standard KV-Cache:</span>
                             <span id="stat-kv" class="text-xs text-rose-400 font-mono">0.00 MB</span>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="mt-auto text-center">
-                <p class="text-[10px] text-slate-600 tracking-tighter">© 2026 VIJÑĀNA AI. PROPRIETARY CONSTANT-MEMORY ARCHITECTURE.</p>
+            <div class="mt-auto text-center opacity-40">
+                <p class="text-[9px] text-slate-500 tracking-tighter uppercase font-mono">© 2026 VIJÑĀNA AI. CONSTANT-MEMORY HHM PROTOCOL.</p>
             </div>
         </aside>
 
         <section class="flex-1 flex flex-col relative">
             <div id="chat-history" class="flex-1 p-6 overflow-y-auto space-y-6 pb-32">
                 <div class="flex items-start">
-                    <div class="bg-slate-800/80 border border-white/5 rounded-2xl rounded-tl-none px-5 py-4 max-w-2xl text-sm leading-relaxed text-slate-300">
-                        Initialization complete. Upload a document to write to the local **Kalpanā** state.
+                    <div class="glass-panel border border-white/5 rounded-2xl rounded-tl-none px-5 py-4 max-w-2xl text-sm leading-relaxed text-slate-300">
+                        System Online. Upload research data to initiate the **Kalpanā** state ingestion. All processing is strictly local.
                     </div>
                 </div>
             </div>
 
             <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent">
                 <div class="glass-panel rounded-2xl flex items-center p-2 shadow-2xl border border-white/10">
-                    <input type="text" id="query-input" placeholder="Ask about the document state..." class="flex-1 bg-transparent border-none outline-none text-slate-200 px-4 placeholder-slate-600 text-sm" disabled>
-                    <button id="btn-send" class="bg-sky-600 hover:bg-sky-500 text-white rounded-xl px-6 py-2 transition-all text-sm font-semibold disabled:opacity-50">
-                        Retrieve
+                    <input type="text" id="query-input" placeholder="Query the local knowledge state..." class="flex-1 bg-transparent border-none outline-none text-slate-200 px-4 placeholder-slate-600 text-sm" disabled>
+                    <button id="btn-send" class="bg-sky-600 hover:bg-sky-500 text-white rounded-xl px-6 py-2 transition-all text-sm font-bold disabled:opacity-30">
+                        RETRIEVE
                     </button>
                 </div>
             </div>
@@ -143,14 +144,13 @@
         import * as webllm from "https://esm.run/@mlc-ai/web-llm";
         import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.0";
         
-        const BANDS = 2048; // cite: 2.1
+        const BANDS = 2048; 
         const DIM = 384; 
 
         let extractor, llmEngine, kalpanaState, documentChunks = [];
 
         async function initialize() {
             try {
-                // 1. Load Embedder
                 extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
                     progress_callback: (x) => {
                         if (x.status === 'progress') {
@@ -161,42 +161,30 @@
                     }
                 });
 
-                // 2. Load Local LLM (Qwen 1.5B)
                 llmEngine = new webllm.MLCEngine();
                 llmEngine.setInitProgressCallback((r) => {
                     const p = Math.round(r.progress * 100);
                     const activity = document.getElementById('llm-activity');
-                    
                     document.getElementById('llm-bar').style.width = p+'%';
                     document.getElementById('llm-pct').innerText = p+'%';
-                    
-                    if (p === 0) activity.innerText = "Allocating GPU...";
-                    else if (p < 100) activity.innerText = "Progressing (Loading Weights)...";
-                    else activity.innerText = "Finalizing Inference State...";
-                    
+                    if (p === 0) activity.innerText = "Allocating GPU Resources...";
+                    else if (p < 100) activity.innerText = "Streaming Inference Weights...";
+                    else activity.innerText = "Readying Qwen Interface...";
                     document.getElementById('llm-status').innerText = r.text;
                 });
                 
                 await llmEngine.reload("Qwen2.5-1.5B-Instruct-q4f16_1-MLC");
-                
-                // 3. Reveal UI
                 document.getElementById('init-overlay').classList.add('hidden-fade');
                 document.getElementById('query-input').disabled = false;
-
             } catch (e) {
                 console.error(e);
-                document.getElementById('llm-status').innerText = "GPU Initialization failed. Ensure WebGPU is enabled.";
+                document.getElementById('llm-status').innerText = "GPU Fallback: WebGPU not available.";
             }
         }
 
-        // Metrics calculation logic
         function updateMetrics(wordCount) {
             const tokens = Math.ceil(wordCount * 1.33);
-            const kalMemoryBytes = (BANDS * DIM * 4 * 2);
-            const kalMemoryMB = kalMemoryBytes / (1024 * 1024);
-            
-            // Est. KV Cache: tokens * hidden_size * layers * precision
-            // Approximate for Qwen 1.5B: 28 layers, 1536 hidden dim
+            const kalMemoryMB = (BANDS * DIM * 4 * 2) / (1024 * 1024);
             const kvCacheMB = (2 * tokens * 1536 * 28 * 2) / (1024 * 1024);
 
             document.getElementById('stat-tokens').innerText = tokens.toLocaleString();
@@ -205,78 +193,79 @@
         }
 
         async function processFile(file) {
-            toggleUIStatus(true, "Extracting PDF Data...");
+            toggleUIStatus(true, "EXTRACTING DATA");
             let text = "";
-            
             if (file.name.toLowerCase().endsWith('.pdf')) {
                 text = await extractTextFromPDF(file);
             } else {
                 text = await file.text();
             }
 
-            toggleUIStatus(true, "Writing to Kalpanā State...");
             documentChunks = chunkText(text);
             updateMetrics(text.split(/\s+/).length);
-
             kalpanaState = new window.KalpanaRIF(BANDS, DIM);
-            
+
+            // LOOP WITH REAL-TIME PERCENTAGE UPDATES
             for (let i = 0; i < documentChunks.length; i++) {
                 const output = await extractor(documentChunks[i].text, { pooling: 'mean', normalize: true });
                 kalpanaState.writeFact(i, output.data);
                 documentChunks[i].vector = output.data;
+
+                // Update Percentage every chunk
+                const pct = Math.round(((i + 1) / documentChunks.length) * 100);
+                document.getElementById('spinner-text').innerText = "WRITING TO KALPANA";
+                document.getElementById('ingest-pct').innerText = `${pct}% COMPLETE`;
+
+                // Yield main thread every 2 chunks to keep UI responsive
+                if (i % 2 === 0) await new Promise(r => setTimeout(r, 10));
             }
             
             toggleUIStatus(false);
-            addMessage("System", `Document ingested. Embedded into constant O(1) memory state.`);
+            addMessage("System", `O(1) State Write Complete. [${documentChunks.length} Chunks Ingested]`);
         }
 
         async function handleQuery() {
             const q = document.getElementById('query-input').value.trim();
             if (!q || !kalpanaState) return;
-            
             document.getElementById('query-input').value = '';
             addMessage('User', q);
-            toggleUIStatus(true, "Searching Kalpanā State...");
+            toggleUIStatus(true, "SEARCHING STATE");
 
             try {
                 const qOutput = await extractor(q, { pooling: 'mean', normalize: true });
-                
-                // Retrieve & Score via Kalpanā RIF
                 const scored = documentChunks.map(chunk => {
                     const rifVec = kalpanaState.readDirect(chunk.id);
                     const score = window.cosineSimilarity(qOutput.data, rifVec);
                     return { ...chunk, score };
                 }).sort((a, b) => b.score - a.score);
 
-                toggleUIStatus(true, "Generating Answer (Local)...");
-
+                toggleUIStatus(true, "GENERATING RESPONSE");
                 const reply = await llmEngine.chat.completions.create({
                     messages: [
-                        { role: "system", content: "You are a research AI. Extract the answer from the context. If not present, say 'Not found'." },
+                        { role: "system", content: "Expert research assistant. Answer concisely using provided context only." },
                         { role: "user", content: `<CONTEXT>\n${scored.slice(0, 3).map(c => c.text).join("\n\n")}\n</CONTEXT>\nQuestion: ${q}` }
                     ],
                     temperature: 0.1
                 });
-
                 toggleUIStatus(false);
                 addMessage("Kalpanā", reply.choices[0].message.content);
-
             } catch (err) {
                 console.error(err);
                 toggleUIStatus(false);
-                addMessage("System", "An error occurred during retrieval.");
+                addMessage("System", "Neural state retrieval interrupted.");
             }
         }
 
-        // Helper UI/Extraction Functions
         function toggleUIStatus(isActive, text = "") {
             const spinner = document.getElementById('global-spinner');
             const spinnerTxt = document.getElementById('spinner-text');
+            const pctTxt = document.getElementById('ingest-pct');
             if (isActive) {
                 spinner.classList.remove('hidden');
                 spinnerTxt.innerText = text;
             } else {
                 spinner.classList.add('hidden');
+                pctTxt.innerText = "0% COMPLETE";
             }
         }
 
@@ -306,8 +295,8 @@
             const div = document.createElement('div');
             div.className = `flex ${sender === 'User' ? 'justify-end' : 'justify-start'}`;
             div.innerHTML = `
-                <div class="${sender === 'User' ? 'bg-sky-900 border-sky-700' : 'bg-slate-800 border-white/5'} border rounded-2xl px-5 py-4 max-w-2xl text-sm shadow-lg">
-                    <span class="block text-[10px] font-bold uppercase mb-1 opacity-50">${sender}</span>
+                <div class="${sender === 'User' ? 'bg-sky-900 border-sky-700 shadow-sky-900/20' : 'bg-slate-800 border-white/5'} border rounded-2xl px-5 py-4 max-w-2xl text-sm shadow-xl transition-all">
+                    <span class="block text-[10px] font-bold uppercase mb-1 opacity-50 tracking-tighter">${sender}</span>
                     <div class="leading-relaxed text-slate-200">${text}</div>
                 </div>
             `;
@@ -318,7 +307,6 @@
         document.getElementById('file-upload').addEventListener('change', (e) => processFile(e.target.files[0]));
         document.getElementById('btn-send').addEventListener('click', handleQuery);
         document.getElementById('query-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleQuery(); });
-
         window.onload = initialize;
     </script>
 </body>

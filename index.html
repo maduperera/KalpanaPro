@@ -2,65 +2,289 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vijñāna AI | Kalpanā Edge</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="kalpana-core.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .gradient-text { background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .loader { border-top-color: #38bdf8; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #init-overlay { transition: opacity 0.5s ease; }
+        .hidden-fade { opacity: 0; pointer-events: none; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-200 p-8">
-    <div class="max-w-2xl mx-auto space-y-4">
-        <h1 class="text-3xl font-bold">Vijñāna AI</h1>
-        
-        <div id="retrieval-status" class="hidden flex items-center space-x-3 bg-slate-800 p-3 rounded-lg border border-sky-500/30">
-            <div class="loader ease-linear rounded-full border-2 border-t-2 border-slate-700 h-5 w-5"></div>
-            <span class="text-sky-400 text-sm font-medium animate-pulse">Reranking & Generating Answer...</span>
-        </div>
+<body class="h-screen w-screen overflow-hidden flex flex-col font-inter">
 
-        <div id="response" class="p-6 bg-slate-800 rounded-xl border border-white/10 min-h-[100px] whitespace-pre-wrap"></div>
-        <input type="text" id="query-input" class="w-full p-3 bg-slate-700 rounded-lg outline-none focus:ring-2 ring-sky-500" placeholder="Ask about Sally...">
-        <button id="btn-send" class="px-6 py-2 bg-sky-600 rounded-lg font-bold">Retrieve</button>
+    <div id="init-overlay" class="absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 text-center text-white">
+        <img src="logo.png" alt="Vijñāna AI" class="h-20 mx-auto mb-4 opacity-90">
+        <h1 class="text-4xl font-bold tracking-wider mb-8">Vijñāna AI</h1>
+        <div class="w-full max-w-md space-y-6">
+            <div>
+                <div class="flex justify-between text-[10px] uppercase mb-1 tracking-widest text-slate-500 font-bold">
+                    <span>Semantic Embedder</span><span id="embedder-pct">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden"><div id="embedder-bar" class="bg-sky-500 h-full w-0 transition-all duration-300"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between items-end mb-1">
+                    <div class="text-left">
+                        <span id="llm-activity" class="text-[10px] text-indigo-400 uppercase block animate-pulse font-bold">Initializing GPU...</span>
+                        <span class="text-xs text-slate-300 uppercase tracking-tight font-bold">Qwen 2.5 1.5B (Local Inference)</span>
+                    </div>
+                    <span id="llm-pct" class="text-indigo-400 text-xs font-mono font-bold">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden"><div id="llm-bar" class="bg-indigo-500 h-full w-0 transition-all duration-300"></div></div>
+                <p id="llm-status" class="text-[10px] text-slate-500 mt-2 italic">WebGPU warming up. Please stay on this tab.</p>
+            </div>
+        </div>
     </div>
 
+    <header class="glass-panel p-4 flex justify-between items-center z-10 border-b border-white/5">
+        <div>
+            <h1 class="text-2xl font-bold gradient-text">Vijñāna AI</h1>
+            <p class="text-[10px] text-slate-500 tracking-widest uppercase font-bold">Kalpanā Air-Gapped Prototype</p>
+        </div>
+        <div id="global-spinner" class="hidden flex items-center space-x-3 bg-slate-800/60 px-5 py-2 rounded-full border border-white/10 shadow-lg">
+            <div class="loader rounded-full border-2 border-t-2 border-slate-700 h-4 w-4"></div>
+            <div class="flex flex-col"><span class="text-[10px] text-sky-400 font-bold uppercase tracking-widest" id="spinner-text">Processing</span><span class="text-[9px] text-slate-400 font-mono" id="ingest-pct">0% Complete</span></div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <aside class="w-1/3 border-r border-slate-800 p-6 flex flex-col space-y-6 overflow-y-auto">
+            <div class="glass-panel rounded-xl p-6 text-center border-dashed border-2 border-slate-700 hover:border-sky-500 transition-all cursor-pointer group" onclick="document.getElementById('file-upload').click()">
+                <input type="file" id="file-upload" class="hidden" accept=".pdf,.txt" />
+                <div class="bg-slate-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-sky-900/30 transition-colors">
+                    <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round"/></svg>
+                </div>
+                <p class="text-sm text-slate-200 font-bold">Ingest Research PDF</p>
+                <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-tight">O(1) State Write Target</p>
+            </div>
+
+            <div class="glass-panel rounded-xl p-5 space-y-4 border border-white/5 shadow-inner">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-2">Kalpanā Efficiency Metrics</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center text-sm"><span class="text-slate-400">Total Tokens:</span><span id="stat-tokens" class="text-slate-100 font-mono">0</span></div>
+                    <div class="flex justify-between items-center text-sm"><span class="text-slate-400">Kalpanā RAM Usage:</span><span id="stat-mem" class="text-emerald-400 font-mono font-bold italic">0.00 MB</span></div>
+                    <div class="pt-4 border-t border-slate-800">
+                        <p class="text-[10px] text-slate-500 uppercase mb-2 font-bold tracking-tighter">Equivalent Transformer Overhead</p>
+                        <div class="flex justify-between items-center"><span class="text-xs text-slate-500 italic">Est. GPU VRAM (KV-Cache):</span><span id="stat-kv" class="text-xs text-rose-400 font-mono font-bold">0.00 MB</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4 border border-white/5">
+                <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest">Inference Engine Mode</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-300 font-semibold">Qwen Reasoning</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="mode-toggle" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600 shadow-lg"></div>
+                    </label>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-2 italic leading-tight text-justify">Disable for instant heuristic extraction from the Kalpanā state.</p>
+            </div>
+        </aside>
+
+        <section class="flex-1 flex flex-col relative bg-slate-900/50">
+            <div id="chat-history" class="flex-1 p-6 overflow-y-auto space-y-6 pb-32">
+                <div class="bg-slate-800/80 border border-white/5 rounded-2xl p-5 text-sm text-slate-300 leading-relaxed shadow-xl max-w-2xl">
+                    <p class="font-bold text-sky-400 mb-2 uppercase tracking-widest text-[10px]">Architecture Online</p>
+                    Kalpanā neural state is active at B=2048, D=371. Ingest research data to begin O(1) retrieval.
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent">
+                <div class="glass-panel rounded-2xl flex items-center p-2 shadow-2xl border border-white/10">
+                    <input type="text" id="query-input" placeholder="Query the local knowledge state..." class="flex-1 bg-transparent border-none outline-none text-slate-200 px-4 text-sm placeholder-slate-600" disabled>
+                    <button id="btn-send" class="bg-sky-600 hover:bg-sky-500 text-white rounded-xl px-8 py-2 transition-all text-xs font-bold uppercase tracking-widest disabled:opacity-30">RETRIEVE</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
     <script type="module">
-        // ... (standard initialization)
+        import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+        import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.0";
+        
+        // CITE: 2.1 - Research parameters for Kalpanā state
+        const BANDS = 2048; 
+        const DIM = 371; 
 
-        async function handleQuery() {
-            const q = document.getElementById('query-input').value;
-            const status = document.getElementById('retrieval-status');
-            const responseNode = document.getElementById('response');
-            
-            status.classList.remove('hidden'); // Show spinner
-            responseNode.innerText = "Accessing Kalpanā State...";
+        let extractor, llmEngine, kalpanaState, documentChunks = [];
 
+        async function initialize() {
             try {
-                // 1. EMBED & RETRIEVE (Kalpanā Hybrid Logic)
-                const qOut = await extractor(q, { pooling: 'mean', normalize: true });
-                const scored = documentChunks.map(c => {
-                    const rifVec = kalpanaState.readDirect(c.id);
-                    return { ...c, score: window.cosineSimilarity(qOut.data, rifVec) };
-                }).sort((a,b) => b.score - a.score);
-
-                // 2. COMPREHENSIVE GENERATION
-                const reply = await llmEngine.chat.completions.create({
-                    messages: [
-                        { role: "system", content: "You are an expert researcher. Provide a comprehensive answer based ONLY on the context. Include names, relationships, and key events." },
-                        { role: "user", content: `<CONTEXT>${scored.slice(0,4).map(s=>s.text).join("\n")}</CONTEXT>\nQuestion: ${q}` }
-                    ],
-                    max_tokens: 250
+                // 1. Load Embedder
+                extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+                    progress_callback: (x) => {
+                        if (x.status === 'progress') {
+                            const p = Math.round((x.loaded / x.total) * 100);
+                            document.getElementById('embedder-bar').style.width = p+'%';
+                            document.getElementById('embedder-pct').innerText = p+'%';
+                        }
+                    }
                 });
 
-                status.classList.add('hidden'); // Hide spinner
-                responseNode.innerText = reply.choices[0].message.content;
-
-            } catch (err) {
-                status.classList.add('hidden');
-                responseNode.innerText = "Error: " + err.message;
+                // 2. Load Local Inference
+                llmEngine = new webllm.MLCEngine();
+                llmEngine.setInitProgressCallback((r) => {
+                    const p = Math.round(r.progress * 100);
+                    document.getElementById('llm-bar').style.width = p+'%';
+                    document.getElementById('llm-pct').innerText = p+'%';
+                    if (p === 0) document.getElementById('llm-activity').innerText = "Allocating GPU Memory...";
+                    else if (p < 100) document.getElementById('llm-activity').innerText = "Streaming Weights...";
+                    else document.getElementById('llm-activity').innerText = "Finalizing Inference State...";
+                    document.getElementById('llm-status').innerText = r.text;
+                });
+                
+                await llmEngine.reload("Qwen2.5-1.5B-Instruct-q4f16_1-MLC");
+                document.getElementById('init-overlay').classList.add('hidden-fade');
+                document.getElementById('query-input').disabled = false;
+            } catch (e) {
+                console.error(e);
             }
         }
-        // ... (rest of logic)
+
+        // CITE: 2.1 - Memory calculation for proprietary HHM state
+        function updateMetrics(wordCount) {
+            const tokens = Math.ceil(wordCount * 1.33); // cite: 1.2
+            const kalMemoryMB = (BANDS * DIM * 4 * 2) / (1024 * 1024); // FLOAT32 re+im space
+            const kvCacheMB = (2 * tokens * 1536 * 28 * 2) / (1024 * 1024); // cite: 2.1, 2.2
+
+            document.getElementById('stat-tokens').innerText = tokens.toLocaleString();
+            document.getElementById('stat-mem').innerText = kalMemoryMB.toFixed(2) + " MB";
+            document.getElementById('stat-kv').innerText = kvCacheMB.toFixed(2) + " MB";
+        }
+
+        async function processFile(file) {
+            toggleUIStatus(true, "EXTRACTING DATA");
+            document.getElementById('ingest-pct').innerText = "0% Extracted";
+            
+            let text = "";
+            if (file.name.toLowerCase().endsWith('.pdf')) {
+                text = await extractTextFromPDF(file, (p) => {
+                    document.getElementById('ingest-pct').innerText = `${p}% Extracted`;
+                });
+            } else {
+                text = await file.text();
+            }
+
+            toggleUIStatus(true, "WRITING TO STATE");
+            documentChunks = chunkText(text);
+            updateMetrics(text.split(/\s+/).length);
+            
+            // CITE: 2.1 - Pass user B/D parameters to Kalpana constructor
+            kalpanaState = new window.KalpanaRIF(BANDS, DIM); 
+            
+            for (let i = 0; i < documentChunks.length; i++) {
+                const output = await extractor(documentChunks[i].text, { pooling: 'mean', normalize: true });
+                kalpanaState.writeFact(i, output.data);
+                documentChunks[i].vector = output.data;
+
+                const pct = Math.round(((i + 1) / documentChunks.length) * 100);
+                document.getElementById('ingest-pct').innerText = `${pct}% Written`;
+                if (i % 2 === 0) await new Promise(r => setTimeout(r, 5)); // Heartbeat for UI
+            }
+            
+            toggleUIStatus(false);
+            addMessage("System", `Kalpanā State Finalized. [${documentChunks.length} Chunks Ingested]`);
+        }
+
+        async function extractTextFromPDF(file, onProgress) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                fullText += content.items.map(item => item.str).join(" ") + " ";
+                if (onProgress) onProgress(Math.round((i / pdf.numPages) * 100));
+                await new Promise(r => setTimeout(r, 0));
+            }
+            return fullText;
+        }
+
+        async function handleQuery() {
+            const q = document.getElementById('query-input').value.trim();
+            const qwenActive = document.getElementById('mode-toggle').checked;
+            if (!q || !kalpanaState) return;
+            
+            document.getElementById('query-input').value = '';
+            addMessage('User', q);
+            const start = performance.now();
+            toggleUIStatus(true, "SEARCHING STATE");
+
+            try {
+                const qOutput = await extractor(q, { pooling: 'mean', normalize: true });
+                const scored = documentChunks.map(chunk => {
+                    const rifVec = kalpanaState.readDirect(chunk.id);
+                    return { ...chunk, score: window.cosineSimilarity(qOutput.data, rifVec) };
+                }).sort((a, b) => b.score - a.score);
+
+                let answer = "";
+                if (!qwenActive) {
+                    // CITE: 1.1, 2.1 - Instant heuristic mode bypasses LLM
+                    answer = `<b>[Instant Heuristic Mode]</b><br><br>${scored[0].text.substring(0, 320)}...`;
+                } else {
+                    toggleUIStatus(true, "GENERATING ANSWER");
+                    const reply = await llmEngine.chat.completions.create({
+                        messages: [
+                            { role: "system", content: "Expert research assistant. Answer concisely using ONLY the context." },
+                            { role: "user", content: `<CONTEXT>\n${scored.slice(0, 3).map(c => c.text).join("\n\n")}\n</CONTEXT>\nQuestion: ${q}` }
+                        ],
+                        temperature: 0.1
+                    });
+                    answer = reply.choices[0].message.content;
+                }
+
+                const end = performance.now();
+                toggleUIStatus(false);
+                addMessage("Kalpanā", `${answer}<br><br><span class='text-[10px] opacity-40 font-mono italic text-sky-400 uppercase tracking-widest'>Lat: ${(end - start).toFixed(2)}ms</span>`);
+
+            } catch (err) {
+                console.error(err);
+                toggleUIStatus(false);
+                addMessage("System", "Neural state retrieval interrupted.");
+            }
+        }
+
+        function toggleUIStatus(isActive, text = "") {
+            const spinner = document.getElementById('global-spinner');
+            if (isActive) {
+                spinner.classList.remove('hidden');
+                document.getElementById('spinner-text').innerText = text;
+            } else {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function chunkText(text) {
+            const words = text.split(/\s+/);
+            const chunks = [];
+            for (let i = 0; i < words.length; i += 80) chunks.push({ id: chunks.length, text: words.slice(i, i + 120).join(' ') });
+            return chunks;
+        }
+
+        function addMessage(sender, text) {
+            const chatHistory = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            div.className = `flex ${sender === 'User' ? 'justify-end' : 'justify-start'}`;
+            div.innerHTML = `<div class="${sender === 'User' ? 'bg-sky-900/40 border-sky-700 shadow-sky-900/10' : 'bg-slate-800/80 border-white/5'} border rounded-2xl rounded-${sender==='User'?'tr':'tl'}-none px-5 py-4 max-w-2xl text-sm shadow-xl transition-all duration-300"><span class="block text-[10px] font-bold uppercase mb-1 opacity-50 tracking-tighter italic text-sky-400">${sender} Agent</span><div class="leading-relaxed text-slate-200">${text}</div></div>`;
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        document.getElementById('btn-send').onclick = handleQuery;
+        document.getElementById('query-input').onkeypress = (e) => { if (e.key === 'Enter') handleQuery(); };
+        document.getElementById('file-upload').onchange = (e) => processFile(e.target.files[0]);
+        window.onload = initialize;
     </script>
 </body>
 </html>
